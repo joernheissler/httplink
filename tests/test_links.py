@@ -1,8 +1,15 @@
+"""
+Tests
+"""
+
 from httplink import unescape, parse_link_header
 import pytest
 
 
-def test_unescape():
+def test_unescape() -> None:
+    """
+    Test unescape function.
+    """
     assert unescape('') == ''
     assert unescape('foo') == 'foo'
     assert unescape(r'\r\n') == 'rn'
@@ -12,7 +19,10 @@ def test_unescape():
         unescape(r'foo\\bar\baz\quuz\\''\\')
 
 
-def test_parse():
+def test_parse() -> None:
+    """
+    Test parse_link_header function.
+    """
     with pytest.raises(ValueError, match='Bad link'):
         parse_link_header('''</> </>''')
 
