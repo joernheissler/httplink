@@ -7,9 +7,7 @@ from io import StringIO
 from typing import Dict, List, Set, Tuple
 from urllib.parse import unquote
 
-__all__ = [
-    'parse_link_header',
-]
+__all__ = ["parse_link_header"]
 
 
 def decode_extended_value(value: str) -> Tuple[str, str, str]:
@@ -18,19 +16,20 @@ def decode_extended_value(value: str) -> Tuple[str, str, str]:
     """
     match = RE_EXT_VALUE.match(value)
     if not match:
-        raise ValueError('Bad extended value: {!r}'.format(value))
+        raise ValueError("Bad extended value: {!r}".format(value))
     charset, language, encoded_value = match.groups()
 
-    if charset.upper() != 'UTF-8':
-        raise ValueError('Only UTF-8 is acceptable, got {!r}'.format(charset))
+    if charset.upper() != "UTF-8":
+        raise ValueError("Only UTF-8 is acceptable, got {!r}".format(charset))
 
-    return unquote(encoded_value, errors='strict'), language, charset
+    return unquote(encoded_value, errors="strict"), language, charset
 
 
 class Link:
     """
     One Link from a Link header
     """
+
     target: str
     attributes: List[Tuple[str, str]]
     rel: Set[str]
@@ -45,7 +44,7 @@ class Link:
         self._attributes = {}
         extended = {}
         for key, value in self.attributes:
-            if key[-1] != '*':
+            if key[-1] != "*":
                 self._attributes[key.lower()] = value
             else:
                 extended[key[:-1].lower()] = decode_extended_value(value)[0]
@@ -54,7 +53,7 @@ class Link:
 
         # Populate rel.
         try:
-            self.rel = {rel.lower() for rel in self['rel'].split()}
+            self.rel = {rel.lower() for rel in self["rel"].split()}
         except KeyError:
             self.rel = set()
 
@@ -69,13 +68,15 @@ class Link:
 
     def __repr__(self) -> str:
         return (
-            '<Link ' +
-            repr(self.target) +
-            ' ' +
-            str(sorted(self.rel)) +
-            ' ' +
-            ' '.join('{!r}={!r}'.format(key, val) for key, val in sorted(self._attributes.items()) if key != 'rel') +
-            '>'
+            "<Link "
+            + repr(self.target)
+            + " "
+            + str(sorted(self.rel))
+            + " "
+            + " ".join(
+                "{!r}={!r}".format(key, val) for key, val in sorted(self._attributes.items()) if key != "rel"
+            )
+            + ">"
         )
 
 
@@ -89,11 +90,7 @@ class ParsedLinks:
 
     def __init__(self, links: List[Link]) -> None:
         self.links = links
-        self._relations = {
-            rel: link
-            for link in links
-            for rel in link.rel
-        }
+        self._relations = {rel: link for link in links for rel in link.rel}
 
     def __getitem__(self, key: str) -> Link:
         return self._relations[key.lower()]
@@ -106,9 +103,9 @@ class ParsedLinks:
 
     def __repr__(self) -> str:
         return (
-            '<ParsedLinks: ' +
-            ', '.join('{}: {}'.format(rel, link) for rel, link in sorted(self._relations.items())) +
-            '>'
+            "<ParsedLinks: "
+            + ", ".join("{}: {}".format(rel, link) for rel, link in sorted(self._relations.items()))
+            + ">"
         )
 
 
@@ -128,7 +125,7 @@ def parse_link_header(link: str) -> ParsedLinks:
         uri_match = matcher.match(link)
         if not uri_match:
             break
-        link = link[uri_match.end():]
+        link = link[uri_match.end() :]
 
         # on subsequent runs, DO require a comma delimiter
         matcher = RE_LINK_VALUE_COMMA
@@ -141,7 +138,7 @@ def parse_link_header(link: str) -> ParsedLinks:
             param_match = RE_LINK_PARAM.match(link)
             if not param_match:
                 break
-            link = link[param_match.end():]
+            link = link[param_match.end() :]
 
             # value is either a token or quoted
             key, value_t, value_q = param_match.groups()
@@ -155,31 +152,38 @@ def parse_link_header(link: str) -> ParsedLinks:
 
     # Check for illegal leftovers
     if not RE_TRAILING_COMMA.match(link):
-        raise ValueError('Bad link: {!r}'.format(link))
+        raise ValueError("Bad link: {!r}".format(link))
 
     return ParsedLinks(result)
 
 
 # rfc8288 link_value (with optional leading ",")
-RE_LINK_VALUE = re.compile(r'''
+RE_LINK_VALUE = re.compile(
+    r"""
     ^
     [\s,]*                                          # Skip empty elements (rfc7230#7).
     <
     ([^>]*)                                         # URI-Reference; contains no ">" according to grammar.
     >
-''', re.X)
+""",
+    re.X,
+)
 
 # rfc8288 link_value (with mandatory leading ",")
-RE_LINK_VALUE_COMMA = re.compile(r'''
+RE_LINK_VALUE_COMMA = re.compile(
+    r"""
     ^
     \s*,[\s,]*                                      # Skip empty elements; require at least one delimiter (rfc7230#7).
     <
     ([^>]*)                                         # URI-Reference; contains no ">" according to grammar.
     >
-''', re.X)
+""",
+    re.X,
+)
 
 # rfc8288 link-param (including ";" from link_value)
-RE_LINK_PARAM = re.compile(r'''
+RE_LINK_PARAM = re.compile(
+    r"""
     ^
     \s*                                             # OWS
     ;                                               # ";"
@@ -199,10 +203,13 @@ RE_LINK_PARAM = re.compile(r'''
             )*
         )"
     )
-''', re.X)
+""",
+    re.X,
+)
 
 # rfc8187 ext_value
-RE_EXT_VALUE = re.compile(r'''
+RE_EXT_VALUE = re.compile(
+    r"""
     ^
     ([-0-9A-Za-z!#$%&+^_`{}~]+)                     # charset
     '
@@ -214,14 +221,19 @@ RE_EXT_VALUE = re.compile(r'''
         [-0-9A-Za-z!#$&+.^_`|~]                     # attr-char
     )*)
     $
-''', re.X)
+""",
+    re.X,
+)
 
 # trailing empty elements (rfc7230#7)
-RE_TRAILING_COMMA = re.compile(r'''
+RE_TRAILING_COMMA = re.compile(
+    r"""
     ^
     [\s,]*
     $
-''', re.X)
+""",
+    re.X,
+)
 
 
 def unescape(escaped_string: str) -> str:
@@ -237,12 +249,12 @@ def unescape(escaped_string: str) -> str:
         if seen_backslash:
             result.write(char)
             seen_backslash = False
-        elif char == '\\':
+        elif char == "\\":
             seen_backslash = True
         else:
             result.write(char)
     if seen_backslash:
-        raise ValueError('Trailing backslash')
+        raise ValueError("Trailing backslash")
 
     result.seek(0)
     return result.read()
