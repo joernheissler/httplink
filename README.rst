@@ -2,6 +2,7 @@ HTTP Link Header Parser
 =======================
 
 Python (>= 3.6) library for parsing RFC 8288 HTTP Link headers.
+Python 2 is not `supported <https://github.com/joernheissler/httplink/pull/2>`_.
 
 .. code-block:: python3
 
