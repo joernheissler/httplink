@@ -54,8 +54,10 @@ class Link:
         # Populate rel.
         try:
             self.rel = {rel.lower() for rel in self["rel"].split()}
-        except KeyError:
-            self.rel = set()
+        except KeyError as e:
+            raise ValueError(
+                "The rel parameter MUST be present per the specification (see: https://tools.ietf.org/html/rfc8288#section-3.3)."
+            ) from e
 
     def __getitem__(self, key: str) -> str:
         return self._attributes[key.lower()]

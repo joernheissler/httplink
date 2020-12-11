@@ -23,16 +23,21 @@ def test_parse() -> None:
     """
     Test parse_link_header function.
     """
-    with pytest.raises(ValueError, match="Bad link"):
-        parse_link_header("""</> </>""")
+    with pytest.raises(ValueError, match="rel parameter MUST be present"):
+        parse_link_header("""</>""")
+
+    trailing_elements_examples = [
+        """</>; rel="previous"; rev= """,
+        """</>; rel="previous" </>; rel="first" """,
+        """</>; rel="previous";, </>; rel="first" """,
+    ]
+    for example in trailing_elements_examples:
+        with pytest.raises(ValueError, match="Bad link"):
+            parse_link_header(example)
 
     assert not parse_link_header("")
     assert not parse_link_header(",")
     assert not parse_link_header(" ,, ,,, ,, ")
-
-    result = parse_link_header("""</>""")
-    assert not result.links[0]
-    assert result.links[0].rel == set()
 
     result = parse_link_header(
         '''<http://example.com/TheBook/chapter2>; rel="previous"; title="previous chapter"'''
