@@ -42,6 +42,8 @@ def test_parse() -> None:
     result = parse_link_header(
         '''<http://example.com/TheBook/chapter2>; rel="previous"; title="previous chapter"'''
     )
+    assert len(result) == 1
+    assert len(result["previous"]) == 2
     assert result["previous"].target == "http://example.com/TheBook/chapter2"
     assert result["previous"].rel == {"previous"}
     assert result["PrEvIoUs"]["TiTlE"] == "previous chapter"
@@ -53,6 +55,7 @@ def test_parse() -> None:
 
     result = parse_link_header('''</terms>; rel="copyright"; Anchor="#foo"''')
     assert len(result) == 1
+    assert len(result["copyright"]) == 2
     assert result.links[0].attributes == [("rel", "copyright"), ("Anchor", "#foo")]
     assert result["copyright"]["ANCHOR"] == "#foo"
     assert "anchor" in result["copyright"]
@@ -66,6 +69,8 @@ def test_parse() -> None:
     """
     )
     assert len(result) == 2
+    assert len(result["previous"]) == 2
+    assert len(result["next"]) == 2
     assert result["previous"]["title"] == "letztes Kapitel"
     assert result["next"]["title"] == "nächstes Kapitel"
     assert "nächstes" in repr(result)
